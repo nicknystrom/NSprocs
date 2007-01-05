@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NSprocsSource>
+
+ <!-- ##################################################### GLOBAL SETTINGS -->
+
+	<!-- Database whose schema is used to generate code -->
+	<ConnectionString Value="Data Source=.;Integrated Security=SSPI;Initial Catalog=Northwind" />
+	
+	<!-- Code snippet placed in generated code when creating the connection. The default value
+       will retrieve a value called 'ConnectionString' from your applications settings. -->
+	<RuntimeConnectionString Value="Properties.Settings.Default.ConnectionString" />
+	
+	<!-- Name of the class which will contain all generated code -->
+	<ClassName Value="Data" />
+	
+	<!-- Generates "#warning <error>" statements in methods whose stored procedure
+	     failed when it was being examined. This generates convenient compiler
+	     warnings in c#, but causes compiler errors in VB, which does not support
+	     the #warning directive, or any equivilant. Setting Value="False" will cause
+	     the #warning line not to be generated at all. -->	  
+	<GenerateWarnings Value="True" />
+	
+	<!-- When a procedure's return type is set to Auto, this options decides
+	     whether the generated method's return type is DataSet or SqlDataReader. -->
+	<AutoReturnType Value="DataSet" />
+	
+	<!-- NSprocs will place any data in the SnippetPre tag at the beginning of each
+	     method it generates, and will place any data in the SnippetPost tag
+	     at the end of each method it generates. Typically this would be used
+	     for error handling and instrumentation purposes. -->
+	<SnippetPre>
+      try
+	    {
+	</SnippetPre>
+	<SnippetPost>
+	    }
+	    catch (Exception __e)
+	    {
+		    // TODO: Make entry in error log...
+		    throw __e;
+	    }
+      finally
+      {
+      } 
+	</SnippetPost>
+
+  <!-- ##################################################### MAPPINGS -->
+
+	<!-- The <Map/> tag associates prefixes on stored procedure names to
+	     class names in generated code.
+	    
+		In the following example, any procedure that starts with MyDB_Projects_
+		(such as MyDB_Projects_Insert or MyDB_Projects_Update) will be placed
+		in a class named Projects, itself a member of the top level
+		Data class (see the <ClassName/> tag above). The prefix is stripped
+		from the procedure name, making the two methods: Data.Projects.Insert
+		and Data.Projects.Update. 
+	-->
+  <Map Prefix="MyDB_Projects_" Class="Projects" />
+	<Map Prefix="MyDB_Tasks_" Class="Tasks" />
+
+  <!-- Maps many built-in sprocs to a seperate class. Remove the following line
+       if you'd rather not include them. -->
+  <Map Prefix="dt_" Class="Microsoft" />
+
+  <!-- Any stored procedure which doesnt match one of the <Map/> tags will
+	     be handled by the default mapping. If a procedure doesnt match the
+	     default mapping either, it will be placed in the top level class with
+	     the method name matching the full procedure name.
+	     
+	     If a procedure which doesnt match one of the explicit mappings but is matched
+	     by the default mapping, the prefix is removed from the procedure name, then
+	     the remaining portion of the procedure name is searched for the deliminator
+	     string. If the deliminator string is not found, the method is treated as
+	     though it does not match the default mapping. The text to the left of the
+	     deliminator is used as the class name, and the all text right of the 
+	     deliminator is considered the method name.
+	     
+	     Following the example, two additional procedures will be considered: 
+	     MyDB_Users_List and MyDB_Orders_Fufill. Since neither match one of the
+	     explicit <Map/> tags, they are compared to the default mapping prefix. They
+	     both start with MyDB_, so they are caught by the default mapping. The next
+	     underscore character (the delmiminator) seperates Users from List and Orders
+	     from Fufill. Therefore two methods will be created: Data.Users.List and
+	     Data.Orders.Fufill.
+	-->
+	<DefaultMapping Prefix="MyDB_" Delim="_" />
+	
+	<!-- The presence of the <IgnoreNonMatchingProcedures/> tag indicates that NSprocs
+	     should not generate a method for procedures that do match any of explicit
+	     mapping or the <DefaultMapping/> tag. -->
+	<IgnoreNonMatchingProcedures />
+
+  <!-- ##################################################### STORED PROCEDURES -->
+
+	<!-- Code generation can be customized on procedure-by-procedure basis. Include
+       a <StoredProcedure/> tag for each procedure that you want to control. 
+       
+       Attributes
+       * Name: exact name of the procedure to cotnrol
+       * NullableParams: by default, NSprocs uses standard intrisic types for the
+         arguments to the generated method. For example, if a procedure has an
+         integer parameter, NSprocs uses a System.Int32 type in the method signature.
+         However, if the procedure parameter can accept null (or more importantly, 
+         can return null in the case of an OUTPUT parameter), you must include the
+         name of the parameter in this list. NSprocs will then use the equivilent
+         System.Data.SqlTypes type instead of the intrisic type.
+       * ReturnType:
+         - None: the procedure does not return any result sets. Output parameters
+           will still function correctly.
+         - DataSet: any result sets returned by the procedure will be used to 
+           populate a new DataSet.
+         - SqlDataReader: a SqlDataReader will be returned, ready for use. Be sure
+           to close the reader when you are done using it.
+         - Auto: If NSprocs thinks the procedure will return at least one result
+           set, the generated method will return a DataSet, otherwise it will not
+           return anything.
+       * Ignore: if set to True, NSprocs will not generate a method corresponding
+         to this procedure. This overrides any values set in the mapping section.
+	-->
+
+  <!-- FORMAT:
+	<StoredProcedure
+		Name="MyDB_Project_Insert"	
+		[NullableParams="@param1,@param2"]
+		[ReturnType="Auto|SqlDataReader|DataSet|None"]
+		[Ignore="True|False"]
+	/>
+	-->
+
+  <!-- Default Behavior: By settings the procedure name to "?", all procedures
+	     that aren't specifically named will be governed by the rules in this tag
+	-->
+  <StoredProcedure  Name="?" ReturnType="Auto" />
+
+</NSprocsSource>
