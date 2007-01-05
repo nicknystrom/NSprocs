@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NSprocs", "NSprocs.csproj", "{26FD5B9F-CEE2-48D3-8975-6FE5DEF099B6}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "NSprocsInstaller", "NSprocsInstaller\NSprocsInstaller.vdproj", "{AFAA49DE-D086-4042-B82D-09633798B466}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{26FD5B9F-CEE2-48D3-8975-6FE5DEF099B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26FD5B9F-CEE2-48D3-8975-6FE5DEF099B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26FD5B9F-CEE2-48D3-8975-6FE5DEF099B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26FD5B9F-CEE2-48D3-8975-6FE5DEF099B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFAA49DE-D086-4042-B82D-09633798B466}.Debug|Any CPU.ActiveCfg = Debug
+		{AFAA49DE-D086-4042-B82D-09633798B466}.Release|Any CPU.ActiveCfg = Release
+		{AFAA49DE-D086-4042-B82D-09633798B466}.Release|Any CPU.Build.0 = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
