@@ -55,6 +55,8 @@
 		Data class (see the <ClassName/> tag above). The prefix is stripped
 		from the procedure name, making the two methods: Data.Projects.Insert
 		and Data.Projects.Update. 
+    
+    Maps may specify a Schema attribute to map against.
 	-->
   <Map Prefix="MyDB_Projects_" Class="Projects" />
 	<Map Prefix="MyDB_Tasks_" Class="Tasks" />

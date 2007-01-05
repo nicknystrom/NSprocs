@@ -95,23 +95,23 @@ namespace NSprocs.Generators.SqlServer
 
 				// can we find a mapping for this procedure?\
 				string name = methodPlain.Name;
-				string keyMap = null;
-				foreach (string key in _Options.Mappings.Keys)
-				{
-					if (name.StartsWith(key))
-					{
-						keyMap = key;
-						break;
-					}
-				}
-				if (null != keyMap)
+                MappingOption map = null;
+                foreach (MappingOption mo in _Options.Mappings)
+                {
+                    if (mo.Match(s))
+                    {
+                        map = mo;
+                        break;
+                    }
+                }
+				if (null != map)
 				{
 					// we found a mapping
 					_AddMethodsToClass(
 						Class,
 						Classes,
-						name.Substring(keyMap.Length),
-						_Options.Mappings[keyMap],
+						string.IsNullOrEmpty(map.Prefix) ? name : name.Substring(map.Prefix.Length),
+						map.Class,
 						methodPlain,
 						methodTransacted);
 				}

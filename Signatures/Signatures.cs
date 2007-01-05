@@ -32,6 +32,7 @@ namespace NSprocs.Signatures
     [ComVisible(false)]
 	public interface ISignature
 	{
+        string Schema { get; }
 		string Name { get; }
 		Exception Exception { get; }
 		ParameterCollection Parameters { get; }

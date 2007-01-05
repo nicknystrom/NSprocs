@@ -20,6 +20,7 @@ nnystrom@gmail.com
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
 using System.Data.SqlClient;
@@ -147,6 +148,30 @@ namespace NSprocs
 		}
 	}
 
+    public class MappingOption
+    {
+        string _schema = String.Empty;
+        string _prefix = String.Empty;
+        string _class;
+
+        public string Schema { get { return _schema; } }
+        public string Prefix { get { return _prefix; } }
+        public string Class { get { return _class; } }
+
+        public MappingOption(XmlTextReader xml)
+        {
+            _schema = xml.GetAttribute("Schema");
+            _prefix = xml.GetAttribute("Prefix");
+            _class = xml.GetAttribute("Class");
+        }
+
+        public bool Match(Signatures.ISignature sig)
+        {
+            return (String.IsNullOrEmpty(_schema) || sig.Schema == _schema) &&
+                   (String.IsNullOrEmpty(_prefix) || sig.Name.StartsWith(_prefix));
+        }
+    }
+
 	public class Options
 	{
 		private string _connectionString;
@@ -165,7 +190,7 @@ namespace NSprocs
 		private bool _ParseNames = false;
 		private string _ParseNamesPrefix = "";
 		private string _ParseNamesDelim = "_";
-		private NameValueCollection _Mappings = new NameValueCollection();
+        private List<MappingOption> _Mappings = new List<MappingOption>();
 
 		public string SnippetPre
 		{
@@ -191,7 +216,7 @@ namespace NSprocs
 			}
 		}
 
-		public NameValueCollection Mappings
+		public List<MappingOption> Mappings
 		{
 			get
 			{
@@ -311,10 +336,7 @@ namespace NSprocs
 							break;
 
 						case "Map":
-							_Mappings.Add(
-								xml.GetAttribute("Prefix"),
-								xml.GetAttribute("Class")
-							);
+							_Mappings.Add(new MappingOption(xml));
 							break;
 
 						case "DefaultMapping":
@@ -386,21 +408,18 @@ namespace NSprocs
 		/// Compares a procedure name to our parameters and decides whether
 		/// it should be ignored or processed.
 		/// </summary>
-		/// <param name="ProcedureName"></param>
+		/// <param name="sig"></param>
 		/// <returns></returns>
-		public bool ShouldProcess(string ProcedureName)
+		public bool Match(Signatures.ISignature sig)
 		{
 			// match against a specific mapping
-			foreach (string mapping in _Mappings.Keys)
-			{
-				if (ProcedureName.StartsWith(mapping))
-				{
-					return true;
-				}
+			foreach (MappingOption mo in Mappings)
+            {
+                if (mo.Match(sig)) return true;
 			}
 
 			// matches the default mapping?
-			if (_ParseNames && ProcedureName.StartsWith(_ParseNamesPrefix))
+			if (_ParseNames && sig.Name.StartsWith(_ParseNamesPrefix))
 			{
 				return true;
 			}
