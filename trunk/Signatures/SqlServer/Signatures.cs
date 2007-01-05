@@ -34,7 +34,7 @@ namespace NSprocs.Signatures.SqlServer
     [ComVisible(false)]
 	public class Signature : ISignature
 	{
-		private string _Owner;
+		private string _Schema;
 		private string _Name;
 		private Exception _Exception = null;
 		private Parameters _Parameters;
@@ -44,9 +44,9 @@ namespace NSprocs.Signatures.SqlServer
 		{
 			get
 			{
-				if (null != _Owner && String.Empty != _Owner)
+				if (null != _Schema && String.Empty != _Schema)
 				{
-					return String.Format("{0}.{1}", _Owner, _Name);
+					return String.Format("{0}.{1}", _Schema, _Name);
 				}
 				else
 				{
@@ -55,11 +55,11 @@ namespace NSprocs.Signatures.SqlServer
 			}
 		}
 
-		public string Owner
+		public string Schema
 		{
 			get
 			{
-				return _Owner;
+				return _Schema;
 			}
 		}
 		public string Name
@@ -101,11 +101,11 @@ namespace NSprocs.Signatures.SqlServer
 		}
 
 		public Signature(
-			string owner,
+			string schema,
 			string proc,
 			Options o)
 		{
-			_Owner = owner;
+            _Schema = schema;
 			_Name = proc;
 
 			// make sure connection is open
@@ -121,9 +121,9 @@ namespace NSprocs.Signatures.SqlServer
 				// add result sets
 				try
 				{
-					_Parameters = new Parameters(_Owner, _Name, con);
+					_Parameters = new Parameters(_Schema, _Name, con);
 					_ResultSets = new ResultSets(
-						_Owner,
+						_Schema,
 						_Name,
 						_Parameters,
 						con);
@@ -156,7 +156,7 @@ namespace NSprocs.Signatures.SqlServer
 				// get the procs
                 string sql =
                 @"select ROUTINE_NAME 'Name',
-                         ROUTINE_SCHEMA 'Owner'
+                         ROUTINE_SCHEMA 'Schema'
                   from INFORMATION_SCHEMA.ROUTINES
                   where ROUTINE_TYPE = 'PROCEDURE'";
 				SqlCommand cmd = new SqlCommand(
@@ -172,13 +172,13 @@ namespace NSprocs.Signatures.SqlServer
 			{
 				try
 				{
-					if (o.ShouldProcess((string)row["Name"]))
+                    Signature s = new Signature(
+                            (string)row["Schema"],
+                            (string)row["Name"],
+                            o);
+					if (o.Match(s))
 					{
-						Add(
-							new Signature(
-							(string)row["Owner"],
-							(string)row["Name"], 
-							o));
+						Add(s);
 					}
 				}
 				catch (Exception e)
