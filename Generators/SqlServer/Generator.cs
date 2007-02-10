@@ -93,71 +93,56 @@ namespace NSprocs.Generators.SqlServer
 					_Options[s.FrameworkName],
 					true);
 
-				// can we find a mapping for this procedure?\
-				string name = methodPlain.Name;
+				// can we find a mapping for this procedure?
+				string methodName = methodPlain.Name;
+                string className = null;
                 MappingOption map = null;
                 foreach (MappingOption mo in _Options.Mappings)
                 {
                     if (mo.Match(s))
                     {
                         map = mo;
+                        methodName = string.IsNullOrEmpty(map.Prefix) ? methodName : methodName.Substring(map.Prefix.Length);
+                        className = map.Class;
                         break;
                     }
                 }
-				if (null != map)
-				{
-					// we found a mapping
-					_AddMethodsToClass(
-						Class,
-						Classes,
-						string.IsNullOrEmpty(map.Prefix) ? name : name.Substring(map.Prefix.Length),
-						map.Class,
-						methodPlain,
-						methodTransacted);
-				}
-				else
+				if (null == map && _Options.ParseNames)
 				{
 					// no mapping found, try default mapping
-					if (_Options.ParseNames)
+					if (methodName.StartsWith(_Options.ParseNamesPrefix))
 					{
-						if (name.StartsWith(_Options.ParseNamesPrefix))
-						{
-							// strip the prefix
-							name = name.Substring(_Options.ParseNamesPrefix.Length);
+						// strip the prefix
+						methodName = methodName.Substring(_Options.ParseNamesPrefix.Length);
 
-							// look for the deliminator
-							int x = name.IndexOf(_Options.ParseNamesDelim);
-							if (-1 == x)
-							{
-								// cant find the deliminator.. put it in the base class
-								Class.Members.Add(methodPlain);
-								Class.Members.Add(methodTransacted);
-							}
-							else
-							{
-								_AddMethodsToClass(
-									Class,
-									Classes,
-									name.Substring(x+1),
-									name.Substring(0, x),
-									methodPlain,
-									methodTransacted);
-							}
-						}
-						else
+						// look for the deliminator
+						int x = methodName.IndexOf(_Options.ParseNamesDelim);
+						if (-1 != x)
 						{
-							// since this sproc doesnt start with the normal
-							// prefix, we place it in the base class
-							Class.Members.Add(methodPlain);
-							Class.Members.Add(methodTransacted);
+                            methodName = methodName.Substring(x+1);
+                            className = methodName.Substring(0, x);
 						}
-					}
-					else
-					{
-						Class.Members.Add(methodPlain);
-						Class.Members.Add(methodTransacted);
 					}
 				}
+                if (String.IsNullOrEmpty(className))
+                {
+                    // add methods to our top level class
+                    methodPlain.Name = methodName;
+                    methodTransacted.Name = methodName;
+					Class.Members.Add(methodPlain);
+					Class.Members.Add(methodTransacted);
+				}
+                else
+                {
+                    // we found a mapping
+				    _AddMethodsToClass(
+					    Class,
+					    Classes,
+					    methodName,
+					    className,
+					    methodPlain,
+					    methodTransacted);
+                }
 			}
 
 			// Add class to namespace
