@@ -9,7 +9,17 @@
 	<!-- Code snippet placed in generated code when creating the connection. The default value
        will retrieve a value called 'ConnectionString' from your applications settings. -->
 	<RuntimeConnectionString Value="Properties.Settings.Default.ConnectionString" />
-	
+
+  <!-- If specified, <RuntimeConnectionString/> will not be used. Instead, the given code
+       snippet will be interpreted as an expression that MUST evaluate to a new SqlConnection
+       object. The connection MAY be open.
+  -->
+  <!--
+  <RuntimeConnectionExpression>
+    MyUtilityClass.CreateConnection();    
+  </RuntimeConnectionExpression>
+  -->
+  
 	<!-- Name of the class which will contain all generated code -->
 	<ClassName Value="Data" />
 	
@@ -28,21 +38,19 @@
 	     method it generates, and will place any data in the SnippetPost tag
 	     at the end of each method it generates. Typically this would be used
 	     for error handling and instrumentation purposes. -->
-	<SnippetPre>
-      try
-	    {
-	</SnippetPre>
+	<SnippetPre>              try
+              {
+  </SnippetPre>
 	<SnippetPost>
-	    }
-	    catch (Exception __e)
-	    {
-		    // TODO: Make entry in error log...
-		    throw __e;
-	    }
-      finally
-      {
-      } 
-	</SnippetPost>
+	            }
+	            catch (Exception __e)
+	            {
+		            // TODO: Make entry in error log...
+		            throw __e;
+	            }
+              finally
+              {
+              }</SnippetPost>
 
   <!-- ##################################################### MAPPINGS -->
 
