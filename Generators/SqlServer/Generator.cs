@@ -613,7 +613,10 @@ namespace NSprocs.Generators.SqlServer
 		private void GenerateUtils(CodeTypeDeclaration Class)
 		{
             // ExecuteXXXX
-			Class.Members.Add(GenerateCreateConnection());
+            if (String.IsNullOrEmpty(_Options.RuntimeConnectionExpression))
+            {
+                Class.Members.Add(GenerateCreateConnection());
+            }
             Class.Members.Add(GenerateExecuteDataReader(true));
             Class.Members.Add(GenerateExecuteDataReader(false));
             Class.Members.Add(GenerateExecuteDataSet(true));
@@ -676,12 +679,24 @@ namespace NSprocs.Generators.SqlServer
 				new CodeMethodReturnStatement(
 					new CodeObjectCreateExpression(
 						typeof(SqlConnection),
-						new CodeSnippetExpression(_Options.RuntimeConnection)
+						new CodeSnippetExpression(_Options.RuntimeConnectionString)
 					)
 				)
 			);
 			return m;
 		}
+
+        CodeExpression GenerateGetConnectionExpression()
+        {
+            if (String.IsNullOrEmpty(_Options.RuntimeConnectionExpression))
+            {
+                return new CodeMethodInvokeExpression(null, "CreateConnection");
+            }
+            else
+            {
+                return new CodeSnippetExpression(_Options.RuntimeConnectionExpression);
+            }
+        }
 
         CodeMemberMethod __GenerateExecuteMethod(string name, bool Transacted)
         {
@@ -704,14 +719,21 @@ namespace NSprocs.Generators.SqlServer
                 "c",
                 Transacted
                     ? (CodeExpression)new CodePropertyReferenceExpression(new CodeArgumentReferenceExpression("Transaction"), "Connection")
-                    : (CodeExpression)new CodeMethodInvokeExpression(null, "CreateConnection")
+                    : GenerateGetConnectionExpression()
             ));
             if (!Transacted)
             {
-                m.Statements.Add(new CodeMethodInvokeExpression(
-                    new CodeVariableReferenceExpression("c"),
-                    "Open"
-                ));
+                m.Statements.Add(
+                    new CodeConditionStatement(
+                        new CodeBinaryOperatorExpression(
+                            new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("c"), "State"),
+                            CodeBinaryOperatorType.IdentityInequality,
+                            new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(ConnectionState)), "Open")),        
+                        new CodeExpressionStatement(
+                            new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("c"),"Open")
+                        )
+                    )
+                );
             }
             m.Statements.Add(new CodeVariableDeclarationStatement(
                 typeof(SqlCommand),
@@ -837,8 +859,6 @@ namespace NSprocs.Generators.SqlServer
         }
 
         #endregion
-
-
 
 		private CodeMemberMethod GenerateReadSqlTypeFromDataRow(
 			string Name,

@@ -175,7 +175,8 @@ namespace NSprocs
 	public class Options
 	{
 		private string _connectionString;
-		private string _runtimeConnection;
+		private string _runtimeConnectionString;
+        private string _runtimeConnectionExpression;
 		private string _className;
 		private ProcedureOptions _default = null;
 		private Hashtable _options = new Hashtable();
@@ -261,13 +262,22 @@ namespace NSprocs
 			return new SqlConnection(_connectionString);
 		}	
 
-		public string RuntimeConnection
+		public string RuntimeConnectionString
 		{
 			get
 			{
-				return _runtimeConnection;
+				return _runtimeConnectionString;
 			}
-		} 
+		}
+
+        public string RuntimeConnectionExpression
+        {
+            get
+            {
+                return _runtimeConnectionExpression;
+            }
+        }
+
 		public string ClassName
 		{
 			get
@@ -320,10 +330,15 @@ namespace NSprocs
 							break;
 
 						case "RuntimeConnectionString":
-							_runtimeConnection = 
+							_runtimeConnectionString = 
 								xml.GetAttribute(
 								"Value");
 							break;
+
+                        case "RuntimeConnectionExpression":
+                            _runtimeConnectionExpression =
+                                xml.ReadInnerXml().Trim();
+                            break;
 
 						case "ClassName":
 							_className = 
@@ -370,7 +385,7 @@ namespace NSprocs
 				} // if
 			} // for
 
-			if (_runtimeConnection == String.Empty)
+			if (_runtimeConnectionString == String.Empty)
 			{
 				throw new Exception("No runtime connection specified.");
 			}
