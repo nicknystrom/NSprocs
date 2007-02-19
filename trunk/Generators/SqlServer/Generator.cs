@@ -119,8 +119,8 @@ namespace NSprocs.Generators.SqlServer
 						int x = methodName.IndexOf(_Options.ParseNamesDelim);
 						if (-1 != x)
 						{
-                            methodName = methodName.Substring(x+1);
                             className = methodName.Substring(0, x);
+                            methodName = methodName.Substring(x+1);
 						}
 					}
 				}
@@ -467,61 +467,7 @@ namespace NSprocs.Generators.SqlServer
 						new CodeObjectCreateExpression(
 							new CodeTypeReference(po.TypedDataSet))
 					)
-				);
-                //m.Statements.Add(
-                //    new CodeVariableDeclarationStatement(
-                //        typeof(int),
-                //        "c",
-                //        new CodePropertyReferenceExpression(
-                //                new CodePropertyReferenceExpression(
-                //                    new CodeVariableReferenceExpression("ds"),
-                //                    "Tables"),
-                //                "Count")
-                //    )
-                //);
-                //m.Statements.Add(
-                //    new CodeVariableDeclarationStatement(
-                //        typeof(string[]),
-                //        "tables",
-                //        new CodeArrayCreateExpression(
-                //            typeof(string[]),
-                //            new CodeVariableReferenceExpression("c")			
-                //        )
-                //    )
-                //);
-                //m.Statements.Add(
-                //    new CodeIterationStatement(
-                //        new CodeVariableDeclarationStatement(
-                //            typeof(int),
-                //            "i",
-                //            new CodePrimitiveExpression(0)),
-                //        new CodeBinaryOperatorExpression(
-                //            new CodeVariableReferenceExpression("i"),
-                //            CodeBinaryOperatorType.LessThan,
-                //            new CodeVariableReferenceExpression("c")),
-                //        new CodeAssignStatement(
-                //            new CodeVariableReferenceExpression("i"),
-                //            new CodeBinaryOperatorExpression(
-                //                new CodeVariableReferenceExpression("i"),
-                //                CodeBinaryOperatorType.Add,
-                //                new CodePrimitiveExpression(1)
-                //            )),
-                //        new CodeStatement[] {
-                //            new CodeAssignStatement(
-                //                new CodeArrayIndexerExpression(
-                //                    new CodeVariableReferenceExpression("tables"),
-                //                    new CodeVariableReferenceExpression("i")),
-                //                new CodePropertyReferenceExpression(
-                //                    new CodeIndexerExpression(
-                //                        new CodePropertyReferenceExpression(
-                //                            new CodeVariableReferenceExpression("ds"),
-                //                            "Tables"),
-                //                        new CodeVariableReferenceExpression("i")),
-                //                    "TableName")
-                //            )
-                //        }
-                //    )
-                //);		
+				);	
 				m.Statements.Add(
 					new CodeMethodInvokeExpression(
 						null,
