@@ -1,0 +1,83 @@
+/* General formatting */
+body, p, div, td, th {
+	font-family: Verdana;
+	font-size: 11px;
+}
+body {
+	margin: 0px;
+	padding: 0px;
+	background-color: #b0b0b8;
+}
+
+/* Header formatting */
+div#header {
+	background-color: black;
+	width: 100%;
+	border-bottom: 2px solid gray;
+	margin: 0px;
+	padding: 0px;
+}
+div#header h1 {
+	margin: 0px 20px;
+	padding-top: 5px;
+	width: 500px;
+	color: white;
+	font-size: 50px;
+}
+div#header h2 {
+	margin: 0px 0px 10px 40px;
+	width: 480px;
+	color: gray;
+	font-size: 12px;
+}
+div#header div#sf {
+	border: none;
+	float: right;
+	margin-top: -64px;
+	margin-right: 32px;
+}
+
+div#content {
+	border-left: 2px solid #999;
+	border-right: 2px solid #999;
+	margin: 0px auto;
+	padding: 12px;
+	width: 800px;
+	background-color: white;
+}
+
+div#content div {
+	margin-left: 32px;
+}
+
+/* Howto formatting */
+div#howto {
+	display: table;
+	width: 700px;
+}
+
+div#howto h1{
+	display: table-caption;
+}
+
+div#howto div.step {
+	display: table-row;
+	margin: 0px 0px 0px 4px;
+	height: 130px;
+}
+
+div#howto div.step p {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+div#howto div.step div.thumb {
+	display: table-cell;
+	background-repeat: no-repeat;
+	width: 220px;
+	height: 144px;	
+}
+
+	
+	
+	
