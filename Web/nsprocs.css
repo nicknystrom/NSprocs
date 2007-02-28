@@ -17,24 +17,44 @@ div#header {
 	margin: 0px;
 	padding: 0px;
 }
-div#header h1 {
-	margin: 0px 20px;
+
+div#header div#container {
+	width: 800px;
+	margin: 0px auto;
+}
+
+div#header div#container h1 {
+	margin: 0px 0px;
 	padding-top: 5px;
 	width: 500px;
 	color: white;
 	font-size: 50px;
 }
-div#header h2 {
-	margin: 0px 0px 10px 40px;
+div#header div#container h2 {
+	margin: 0px 0px 10px 20px;
 	width: 480px;
 	color: gray;
 	font-size: 12px;
 }
-div#header div#sf {
+div#header div#container div#sf {
 	border: none;
 	float: right;
 	margin-top: -64px;
 	margin-right: 32px;
+}
+
+div#menu {
+	padding: 8px;
+	margin: 0 auto;
+	text-align: center;
+}
+
+div#menu a {
+	padding: 8px;
+	margin: 0px;
+	color: white;
+	background-color: gray;
+	border: 1px outset black;
 }
 
 div#content {
