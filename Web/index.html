@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<title>NSprocs</title>
+
+	<link rel="stylesheet" href="nsprocs.css" type="text/css" media="screen charset=utf-8">
+		
+		<script src="lib/prototype.js" type="text/javascript" charset="utf-8"></script>
+		<script src="lib/scriptaculous.js" type="text/javascript" charset="utf-8"></script>
+
+	</head>
+
+	<body onload="">
+
+		<div id="header">
+			<h1>NSprocs</h1>
+			<h2>Easy ADO.NET access to stored procedures.</h2>
+			<div id="sf"><a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=84581&amp;type=3" width="125" height="37" border="0px" alt="SourceForge.net Logo" /></a></div>
+		</div>
+		
+		<div id="content">
+			
+			<div>
+				<a href="http://www.sf.net/projects/nsprocs">Project</a>
+				<a href="http://downloads.sourceforge.net/nsprocs/NSprocsInstaller-1.1.0.msi">Download</a>
+				<a href="http://nsprocs.svn.sourceforge.net/viewvc/nsprocs/">Source</a>
+				
+			</div>
+			
+			<h1>What is NSprocs?</h1>
+			<div>
+				<p>In short, NSprocs is a code generator that creates glue code between database stored procedures and your .NET code. Normally, to call a stored procedure from .NET, you'd need to create and open a connection, construct a command, fill out parameters, and finally run the command. NSprocs generates this code for you, so that calling any stored procedure in your database can be done with a single line of code.</p>
+				<p>It's worth noting that NSprocs is not an ORM layer; NSprocs-generated methods cannot return anything more structured than a dataset.</p>
+			</div>
+		
+			<h1>Why use NSprocs?</h1>
+			<div>
+				<p>NSprocs provides three key benefits:</p>
+				<ul>
+					<li>Productivity. Write way less ADO.NET code. Period. Write your new stored proc, and be using it in .NET with a single click.</li>
+					<li>Conformance. NSprocs calls each procedure in exactly the same way, and leaves room for you to add logging, instrumentation, and error trapping as part of each method call. You can implement ADO.NET best practices in one place, and be sure that all database code in your application is taking advantage of that.</li>
+					<li>Confidence. C# is a strongly typed language, which lets the compiler detect all sorts of buggy code at compile time instead of at runtime, where only tedious debugging can solve the problem. But when you use ADO.NET to invoke stored procedures, the compiler has no idea whether the parameters your code sends are what the procedure expects, or whether the procedure even exists anymore. NSprocs solves this problem by wrapping each stored procedure in a method <i>whose signature closely matches that of the original stored procedure</i>. This means that if you change the procedure's parameters or name, you'll get actual C# compiler errors! This can be enormously beneficial in small to medium sized teams in which each developer is also a cowboy DBA.</li>
+				</ul>
+			</div>
+		
+			<h1>Who is NSprocs for?</h1>
+			<div>
+				<p>For Microsoft Visual Studio.NET 2005 developers building applications that must access their database through stored procedures, or would like to.</p>
+			</div>
+		
+			<h1>How do I use NSprocs?</h1>
+			<div id="howto">
+				<div id="step1" class="step">
+					<p>Start off by writing your stored procedures. Use just about any SQL Server data as a parameter, including GUIDs and BLOBs.</p>
+					<div id="step1thumb" class="thumb" style="background-image: url(img/step1.thumb.png);"></div>
+				</div>
+				<div id="step2" class="step">
+					<div id="step2thumb" class="thumb" style="background-image: url(img/step2.thumb.png);"></div>
+					<p>In your Visual Studio 2005 project, add a simple xml configuration file. You'll describe where to find your database, and how the code will be generated. Don't worry, because there's an extensively self-documented example file to get you started.</p>
+				</div>
+				<div id="step3" class="step">
+					<p>Once you're satisfied with the configuration file, pull up the properties tab in Visual Studio and set the Custom Tool to NSprocs. There may be a slight pause while your code is generated.</p>
+					<div id="step3thumb" class="thumb" style="background-image: url(img/step3.thumb.png);"></div>
+				</div>
+				<div id="step4" class="step">
+					<div id="step4thumb" class="thumb" style="background-image: url(img/step4.thumb.png);"></div>
+					<p>You're done! Start coding using your new auto-generated class. You'll get code completion and Intellisense parameters for all your stored procedures.</p>
+				</div>
+			</div>
+		
+		</div>
+	</body>
+</html>
