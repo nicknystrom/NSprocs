@@ -37,6 +37,13 @@ namespace NSprocs
 		None
 	}
 
+    public enum IdentifierFormat
+    {
+        None,
+        Pascal,
+        Camel
+    }
+
 	public class ProcedureOptions
 	{
         public List<string> NullableParams { get; set; }
@@ -181,6 +188,7 @@ namespace NSprocs
 	    public string ClassName { get; set; }
 	    public bool IgnoreNonMatchingProcedures { get; set; }
         public string Language { get; set; }
+        public IdentifierFormat IdentifierFormat { get; set; }
 
 		public Options(string xml)
 			: this(new XmlTextReader(new StringReader(xml))) 
@@ -199,6 +207,13 @@ namespace NSprocs
 				{
 					switch (xml.Name)
 					{
+                        case "IdentifierFormat":
+					        IdentifierFormat = (IdentifierFormat) Enum.Parse(
+                                typeof (IdentifierFormat),
+                                xml.GetAttribute("Value"),
+                                true);
+                            break;
+
                         case "Language":
 					        Language = xml.GetAttribute("Value");
 					        break;

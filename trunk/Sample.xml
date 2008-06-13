@@ -56,6 +56,10 @@
   <!-- Optionally make the language explicit. Auto-detection does not always work
        so set this to either C# or VB if NSprocs generates the wrong kind of file for you. -->
   <Language Value="VB" />
+
+  <!-- All identifiers (class, method, parameter names) will be reformed from their
+       database naming using either Pascal, Camel, or None formatting. -->
+  <IdentifierFormat Value="Pascal" />
   
   <!-- ##################################################### MAPPINGS -->
 
@@ -100,6 +104,17 @@
 	     Data.Orders.Fufill.
 	-->
 	<DefaultMapping Prefix="MyDB_" Delim="_" />
+
+  <!-- Alternatively, default mapping can be done with regular expressions. Create
+       a pattern with a group named 'method' and a group named 'class', as in this
+       example:
+       
+       <DefaultMapping Pattern="(?&lt;method&gt;[a-zA-Z]*)_(?&lt;class&gt;.*)" />
+  
+       This pattern reversed the typical "class_method" order into "method_class", 
+       such that procedures like "update_address" become Data.Address.Update(...).
+  
+  -->
 	
 	<!-- The presence of the <IgnoreNonMatchingProcedures/> tag indicates that NSprocs
 	     should not generate a method for procedures that do match any of explicit

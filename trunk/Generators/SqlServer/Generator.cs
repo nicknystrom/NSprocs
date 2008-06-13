@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-
+using System.Text;
 using NSprocs.Signatures.SqlServer;
 
 namespace NSprocs.Generators.SqlServer
@@ -128,6 +128,7 @@ namespace NSprocs.Generators.SqlServer
                         }
                     }
                 }
+                methodName = FormatIdentifier(Options, methodName);
                 if (String.IsNullOrEmpty(className))
                 {
                     // add methods to our top level class
@@ -139,6 +140,7 @@ namespace NSprocs.Generators.SqlServer
                 else
                 {
                     // we found a mapping
+                    className = FormatIdentifier(Options, className);
                     _AddMethodsToClass(
                         Class,
                         Classes,
@@ -153,6 +155,47 @@ namespace NSprocs.Generators.SqlServer
             Root.Types.Add(Class);
 
             return Root;
+        }
+
+        public static string FormatIdentifier(Options o, string identifier)
+        {
+            if (o.IdentifierFormat == IdentifierFormat.None) return identifier;
+
+            var parts = identifier.Split('_', ' ', '\t');
+            var a = new StringBuilder(identifier.Length); 
+            switch (o.IdentifierFormat)
+            {
+                case IdentifierFormat.Pascal:
+                    for (var i = 0; i < parts.Length; i++)
+                    {
+                        var part = parts[i];
+                        if (part.Length > 0)
+                        {
+                            a.Append(part[0].ToString().ToUpperInvariant());
+                            if (part.Length > 1) 
+                                a.Append(part.Substring(1));
+                        }
+                    }
+                    break;
+
+                case IdentifierFormat.Camel:
+                    for (var i = 0; i < parts.Length; i++)
+                    {
+                        var part = parts[i];
+                        if (part.Length > 0)
+                        {
+                            if (i == 0)
+                                a.Append(part[0].ToString().ToLowerInvariant());
+                            else
+                                a.Append(part[0].ToString().ToUpperInvariant());
+
+                            if (part.Length > 1)
+                                a.Append(part.Substring(1));
+                        }
+                    } 
+                    break;
+            }
+            return a.ToString();
         }
 
         private static void _AddMethodsToClass(
@@ -274,7 +317,7 @@ namespace NSprocs.Generators.SqlServer
                         po.NullableParams.Contains(p.Name) ?
                             p.SqlType :
                             p.FrameworkType,
-                        p.FrameworkName);
+                        FormatIdentifier(Options, p.FrameworkName));
                 if (p.Type == "output")
                 {
                     pde.Direction = FieldDirection.Out;
@@ -320,7 +363,7 @@ namespace NSprocs.Generators.SqlServer
                         new[] {
 							new CodePrimitiveExpression(p.Name),
 							(p.Type == "input")
-                                ? new CodeArgumentReferenceExpression(p.FrameworkName)
+                                ? new CodeArgumentReferenceExpression(FormatIdentifier(Options, p.FrameworkName))
                                 : ((CodeExpression) new CodeFieldReferenceExpression(
 													new CodeTypeReferenceExpression(typeof(SqlDbType)), p.SqlDbType.ToString())
 								)
@@ -402,7 +445,7 @@ namespace NSprocs.Generators.SqlServer
                         }
                         assigns.Add(
                             new CodeAssignStatement(
-                                new CodeArgumentReferenceExpression(p.FrameworkName),
+                                new CodeArgumentReferenceExpression(FormatIdentifier(Options, p.FrameworkName)),
                                 new CodeMethodInvokeExpression(
                                     new CodeTypeReferenceExpression(Options.ClassName),
                                     method,
@@ -419,7 +462,7 @@ namespace NSprocs.Generators.SqlServer
                         // [argument] = (type)parms[i].Value;
                         assigns.Add(
                             new CodeAssignStatement(
-                                new CodeArgumentReferenceExpression(p.FrameworkName),
+                                new CodeArgumentReferenceExpression(FormatIdentifier(Options, p.FrameworkName)),
                                 new CodeCastExpression(
                                     p.FrameworkType,
                                     new CodePropertyReferenceExpression(
