@@ -101,7 +101,7 @@ namespace NSprocs
 
 			// Read NullableParams
 			NullableParams = new List<string>();
-			string a = xml.GetAttribute("NullableParams");
+			var a = xml.GetAttribute("NullableParams");
 			if (null != a)
 			{
 				NullableParams.AddRange(a.Split(','));
@@ -148,6 +148,7 @@ namespace NSprocs
 	    public string RuntimeConnectionExpression { get; set; }
 	    public string ClassName { get; set; }
 	    public bool IgnoreNonMatchingProcedures { get; set; }
+        public string Language { get; set; }
 
 		public Options(string xml)
 			: this(new XmlTextReader(new StringReader(xml))) 
@@ -166,6 +167,10 @@ namespace NSprocs
 				{
 					switch (xml.Name)
 					{
+                        case "Language":
+					        Language = xml.GetAttribute("Value");
+					        break;
+
 						case "ConnectionString":
 							ConnectionString = 
 								xml.GetAttribute(
@@ -250,7 +255,7 @@ namespace NSprocs
             get
             {
                 // look for the record
-                return _options[proc] ?? _default;
+                return _options.ContainsKey(proc) ? _options[proc] : _default;
             }
         }
 
@@ -287,7 +292,7 @@ namespace NSprocs
 		public bool Match(Signatures.ISignature sig)
 		{
 			// match against a specific mapping
-			foreach (MappingOption mo in Mappings)
+			foreach (var mo in Mappings)
             {
                 if (mo.Match(sig)) return true;
 			}
