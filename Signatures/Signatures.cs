@@ -20,12 +20,7 @@ nnystrom@gmail.com
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Data.SqlClient;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace NSprocs.Signatures
 {
@@ -35,8 +30,8 @@ namespace NSprocs.Signatures
         string Schema { get; }
 		string Name { get; }
 		Exception Exception { get; }
-		ParameterCollection Parameters { get; }
-		ResultSetCollection ResultSets { get; }
+		IList<IParameter> Parameters { get; }
+		IList<IResultSet> ResultSets { get; }
 	}
 
     [ComVisible(false)]
@@ -58,26 +53,6 @@ namespace NSprocs.Signatures
 
     [ComVisible(false)]
 	public interface IResultSet
-	{
-	}
-
-    [ComVisible(false)]
-	public abstract class SignatureCollection : List<ISignature>
-	{
-	}
-
-    [ComVisible(false)]
-	public abstract class ParameterCollection : List<IParameter>
-	{
-	}
-
-    [ComVisible(false)]
-	public abstract class ResultSetCollection : List<IResultSet>
-	{
-	}
-
-    [ComVisible(false)]
-	public abstract class ResultSetColumnCollection : List<IResultSetColumn>
 	{
 	}
 }

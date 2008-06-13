@@ -19,10 +19,9 @@ nnystrom@gmail.com
 */
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -31,17 +30,17 @@ using NSprocs.Signatures;
 namespace NSprocs.Signatures.SqlServer
 {
     [ComVisible(false)]
-	public class ResultSets : ResultSetCollection
-	{
+	public class ResultSets : List<IResultSet>
+    {
 		public ResultSets(
 			string owner,
 			string proc,
-			ParameterCollection parms,
+			IEnumerable<IParameter> parms,
 			SqlConnection con)
 		{
 			// execute the proc in format only mode
-			bool firstParm = true;
-			StringBuilder sb = new StringBuilder();
+			var firstParm = true;
+			var sb = new StringBuilder();
             sb.Append(@"SET FMTONLY ON
 			            EXEC ");
 			sb.Append(owner);
@@ -50,67 +49,65 @@ namespace NSprocs.Signatures.SqlServer
 			sb.Append(" ");
 			foreach (Parameter p in parms)
 			{
-				if ("input" == p.Type || "output" == p.Type)
-				{
-					if (!firstParm)
-						sb.Append(", ");
-					firstParm = false;
+			    if ("input" != p.Type && "output" != p.Type) continue;
+			    if (!firstParm)
+			        sb.Append(", ");
+			    firstParm = false;
 
-					sb.Append(p.Name);
-					sb.Append("=");
+			    sb.Append(p.Name);
+			    sb.Append("=");
 
-					// we need to create a string with format @name=<value>
-					// which is used when quering for the result sets
-					switch (p.DataType.ToLower())
-					{
-						case "int":
-						case "bigint":
-						case "smallint":
-						case "tinyint":
-						case "bit":
-						case "decimal":
-						case "float":
-						case "money":
-						case "smallmoney":
-						case "real":
-						case "binary":
-						case "varbinary":
-						case "timestamp":
-						case "numeric":
-							sb.Append("1");
-							break;
+			    // we need to create a string with format @name=<value>
+			    // which is used when quering for the result sets
+			    switch (p.DataType.ToLower())
+			    {
+			        case "int":
+			        case "bigint":
+			        case "smallint":
+			        case "tinyint":
+			        case "bit":
+			        case "decimal":
+			        case "float":
+			        case "money":
+			        case "smallmoney":
+			        case "real":
+			        case "binary":
+			        case "varbinary":
+			        case "timestamp":
+			        case "numeric":
+			            sb.Append("1");
+			            break;
 
-						case "datetime":
-						case "smalldatetime":
-							sb.Append("'9/23/1981'");
-							break;
+			        case "datetime":
+			        case "smalldatetime":
+			            sb.Append("'1/1/2000'");
+			            break;
 
-						case "uniqueidentifier":
-							sb.Append("'" + Guid.Empty.ToString() + "'");
-							break;
+			        case "uniqueidentifier":
+			            sb.Append("'" + Guid.Empty.ToString() + "'");
+			            break;
 
-						case "char":
-						case "nchar":
-						case "varchar":
-						case "nvarchar":
-						case "text":
-						case "ntext":
-						case "variant":
-						default:
-							sb.Append("''");
-							break;
-					}
-				}
+			        case "char":
+			        case "nchar":
+			        case "varchar":
+			        case "nvarchar":
+			        case "text":
+			        case "ntext":
+			        case "variant":
+			        default:
+			            sb.Append("''");
+			            break;
+			    }
 			}
 			sb.Append("\n");
 			sb.Append("SET FMTONLY OFF\n");
 			
 			// now run it
-			SqlCommand cmd = new SqlCommand(
+			var cmd = new SqlCommand(
 				sb.ToString(),
 				con);
-			DataSet ds = new DataSet();
-			SqlDataAdapter a = new SqlDataAdapter(cmd);
+			var ds = new DataSet();
+			var a = new SqlDataAdapter(cmd);
 			a.FillSchema(ds, SchemaType.Source);
 
 			// and build interpret the results
@@ -124,34 +121,19 @@ namespace NSprocs.Signatures.SqlServer
     [ComVisible(false)]
 	public class ResultSetColumn : IResultSetColumn
 	{
-		private string _Name;
-		private string _DataType;
+        public string Name { get; private set; }
+        public string DataType { get; private set; }
 
-		public string Name
+        public ResultSetColumn(DataColumn c)
 		{
-			get
-			{
-				return _Name;
-			}
-		}
-		public string DataType
-		{
-			get
-			{
-				return _DataType;
-			}
-		}
-
-		public ResultSetColumn(DataColumn c)
-		{
-			_Name = c.ColumnName;
-			_DataType = c.DataType.ToString();
+			Name = c.ColumnName;
+			DataType = c.DataType.ToString();
 		}
 	}
 
     [ComVisible(false)]
-	public class ResultSetColumns : ResultSetColumnCollection
-	{
+	public class ResultSetColumns : List<IResultSetColumn>
+    {
 		public ResultSetColumns(DataTable t)
 		{
 			foreach(DataColumn c in t.Columns)
@@ -164,19 +146,11 @@ namespace NSprocs.Signatures.SqlServer
     [ComVisible(false)]
 	public class ResultSet : IResultSet
 	{
-		private ResultSetColumns _Columns;
+        public ResultSetColumns Columns { get; private set; }
 
-		public ResultSetColumnCollection Columns
+        public ResultSet(DataTable t)
 		{
-			get
-			{
-				return _Columns;
-			}
-		}
-
-		public ResultSet(DataTable t)
-		{
-			_Columns = new ResultSetColumns(t);
+			Columns = new ResultSetColumns(t);
 		}
 	}
 }

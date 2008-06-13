@@ -19,103 +19,79 @@ nnystrom@gmail.com
 */
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace NSprocs.Signatures.SqlServer
 {
     [ComVisible(false)]
-	public class Parameters : ParameterCollection
-	{
+	public class Parameters : List<IParameter>
+    {
 		public Parameters(
 			string owner,
 			string proc,
 			SqlConnection con)
 		{
 			// fill out command object
-			SqlCommand cmd = new SqlCommand(
+			var cmd = new SqlCommand(
 				"sp_sproc_columns",
-				con);
-			cmd.CommandType = CommandType.StoredProcedure;
-			cmd.Parameters.AddWithValue("@procedure_owner", owner);
-			cmd.Parameters.AddWithValue("@procedure_name", proc);
-		
-			// execute command into dataset
-			SqlDataReader rs = cmd.ExecuteReader();
-			try
+				con)
 			{
-				while (rs.Read())
-				{
-					Parameter p = new Parameter(rs);
-					if (p.Name != "@RETURN_VALUE")
-					{
-						Add(p);
-					}
-				}	
-			}
-			finally
-			{
-				rs.Close();
-			}
+			    CommandType = CommandType.StoredProcedure
+		    };
+		    cmd.Parameters.AddWithValue("@procedure_owner", owner);
+            cmd.Parameters.AddWithValue("@procedure_name", proc);
+
+            // execute command into dataset
+            var rs = cmd.ExecuteReader();
+            if (null != rs)
+            {
+                try
+                {
+                    while (rs.Read())
+                    {
+                        var p = new Parameter(rs);
+                        if (p.Name != "@RETURN_VALUE")
+                        {
+                            Add(p);
+                        }
+                    }
+                }
+                finally
+                {
+                    rs.Close();
+                }
+            }
 		}
 	}
 
     [ComVisible(false)]
 	public class Parameter : IParameter
 	{
-		private string _Name;
-		private string _Type;
-		private string _DataType;
-		private int _Size;
-		private bool _Nullable;
+        public string Name { get; private set; }
+        public string Type { get; private set; }
+        public string DataType { get; private set; }
+        public int Size { get; private set; }
+        public bool Nullable { get; private set; }
 
-		public string Name
+        public string FrameworkName
 		{
 			get
 			{
-				return _Name;
+				return Name.StartsWith("@") ? Name.Substring(1) : Name;
 			}
 		}
-		public string FrameworkName
-		{
-			get
-			{
-				if (_Name.StartsWith("@"))
-				{
-					return _Name.Substring(1);
-				}
-				else
-				{
-					return _Name;
-				}
-			}
-		}
-		public string Type
-		{
-			get
-			{
-				return _Type;
-			}
-		}
-		public string DataType
-		{
-			get
-			{
-				return _DataType;
-			}
-		}
-		public SqlDbType SqlDbType
+
+        public SqlDbType SqlDbType
 		{
 			get
 			{
 				// there are some exceptions that need to be hand coded. these are the 
 				// sql server 'synonyms' or common user defined types
-				switch (_DataType.ToLower())
+				switch (DataType.ToLower())
 				{
 					case "numeric":
 						return SqlDbType.Decimal;
@@ -124,9 +100,10 @@ namespace NSprocs.Signatures.SqlServer
 					case "sql_variant":
 						return SqlDbType.Variant;
 				}
-				return (SqlDbType)Enum.Parse(typeof(SqlDbType), _DataType, true);
+				return (SqlDbType)Enum.Parse(typeof(SqlDbType), DataType, true);
 			}
 		}
+
 		public Type SqlType
 		{
 			get
@@ -213,73 +190,51 @@ namespace NSprocs.Signatures.SqlServer
 					case SqlDbType.SmallDateTime:
 						return typeof(DateTime);
 					case SqlDbType.UniqueIdentifier:
-						return typeof(System.Guid);
+						return typeof(Guid);
 					default:
 						return typeof(object);
 				}
 			}
 		}
-		public int Size
-		{
-			get
-			{
-				return _Size;
-			}
-		}
-		public bool Nullable
-		{
-			get
-			{
-				return _Nullable;
-			}
-		}
 
-		public Parameter(SqlDataReader r)
+        public Parameter(IDataRecord r)
 		{
 			// name
-			_Name = (string)r["COLUMN_NAME"];
+			Name = (string)r["COLUMN_NAME"];
 
 			// param type
-			short paramType = (short)r["COLUMN_TYPE"];
-			if (1 == paramType)
+			var paramType = (short)r["COLUMN_TYPE"];
+			switch (paramType)
 			{
-				_Type = "input";
-			}
-			else if (2 == paramType)
-			{
-				_Type = "output";
-			}
-			else if (5 == paramType)
-			{
-				_Type = "return";
-			}
-			else
-			{
-				_Type = "other";
+			    case 1:
+			        Type = "input";
+			        break;
+			    case 2:
+			        Type = "output";
+			        break;
+			    case 5:
+			        Type = "return";
+			        break;
+			    default:
+			        Type = "other";
+			        break;
 			}
 
 			// data type
-			_DataType = r["TYPE_NAME"].ToString();
+			DataType = r["TYPE_NAME"].ToString();
 
 			// set the size?
 			if (!r.IsDBNull(r.GetOrdinal("CHAR_OCTET_LENGTH")))
 			{
-				_Size = (int)r["CHAR_OCTET_LENGTH"];
+				Size = (int)r["CHAR_OCTET_LENGTH"];
 			}
 			else
 			{
-				_Size = -1;
+				Size = -1;
 			}
 
 			// nullable?
-			if ("YES" == (string)r["IS_NULLABLE"])
-			{
-				_Nullable = true;
-			}
-			else
-			{
-				_Nullable = false;
-			}
+			Nullable = ("YES" == (string)r["IS_NULLABLE"]);
 		}
 	}
 }

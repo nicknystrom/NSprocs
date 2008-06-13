@@ -19,10 +19,7 @@ nnystrom@gmail.com
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Xml;
@@ -41,19 +38,19 @@ namespace NSprocs
 
 	public class ProcedureOptions
 	{
-		private string _name;
-		private bool _ignore = false;
-		private ProcedureReturnType _returnType = ProcedureReturnType.Auto;
-		private StringCollection _nullableParams;
-		private string _typedDatset;
+        public List<string> NullableParams { get; set; }
+        public string Name { get; set; }
+        public bool Ignore { get; set; }
+        public ProcedureReturnType ReturnType { get; set; }
+        public string TypedDataSet { get; set; }
 
-		public ProcedureOptions(
+	    public ProcedureOptions(
 			XmlTextReader xml)
 		{
 			// Read Name
-			_name = xml.GetAttribute("Name");
-			if (string.Empty == _name ||
-				_name.Length < 1)
+			Name = xml.GetAttribute("Name");
+			if (string.Empty == Name ||
+				Name.Length < 1)
 			{
 				throw new LineNumberedException(
 					xml.LineNumber,
@@ -63,7 +60,7 @@ namespace NSprocs
 			}
 			
 			// Read Ignore
-			_ignore =
+			Ignore =
 				xml.GetAttribute("Ignore") == "true" ?
 				true:
 				false;
@@ -71,13 +68,13 @@ namespace NSprocs
 			// Read ReturnType
 			if (null == xml.GetAttribute("ReturnType"))
 			{
-				_returnType = ProcedureReturnType.NotSpecified;
+				ReturnType = ProcedureReturnType.NotSpecified;
 			}
 			else
 			{
 				try
 				{
-					_returnType = (ProcedureReturnType)Enum.Parse(
+					ReturnType = (ProcedureReturnType)Enum.Parse(
 						typeof(ProcedureReturnType),
 						xml.GetAttribute("ReturnType"),
 						false);
@@ -93,8 +90,8 @@ namespace NSprocs
 			}
 
 			// Read TypedDataset name
-			_typedDatset = xml.GetAttribute("TypedDataSet");
-			if (null != _typedDatset && String.Empty == _typedDatset)
+			TypedDataSet = xml.GetAttribute("TypedDataSet");
+			if (null != TypedDataSet && String.Empty == TypedDataSet)
 			{
 				throw new LineNumberedException(
 					xml.LineNumber,
@@ -103,219 +100,65 @@ namespace NSprocs
 			}
 
 			// Read NullableParams
-			_nullableParams = new StringCollection();
+			NullableParams = new List<string>();
 			string a = xml.GetAttribute("NullableParams");
 			if (null != a)
 			{
-				_nullableParams.AddRange(a.Split(','));
+				NullableParams.AddRange(a.Split(','));
 			}
-		}
-
-		public StringCollection NullableParams
-		{
-			get
-			{
-				return _nullableParams;
-			}
-		}
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
-		public bool Ignore
-		{
-			get
-			{
-				return _ignore;
-			}
-		}
-		public ProcedureReturnType ReturnType
-		{
-			get
-			{
-				return _returnType;
-			}
-		}
-		public string TypedDataSet
-		{
-			get
-			{
-				return _typedDatset;
-			}
+	        ReturnType = ProcedureReturnType.Auto;
 		}
 	}
 
     public class MappingOption
     {
-        string _schema = String.Empty;
-        string _prefix = String.Empty;
-        string _class;
+        public string Schema { get; private set; }
+        public string Prefix { get; private set; }
+        public string Class { get; private set; }
 
-        public string Schema { get { return _schema; } }
-        public string Prefix { get { return _prefix; } }
-        public string Class { get { return _class; } }
-
-        public MappingOption(XmlTextReader xml)
+        public MappingOption(XmlReader xml)
         {
-            _schema = xml.GetAttribute("Schema");
-            _prefix = xml.GetAttribute("Prefix");
-            _class = xml.GetAttribute("Class");
+            Schema = xml.GetAttribute("Schema");
+            Prefix = xml.GetAttribute("Prefix");
+            Class = xml.GetAttribute("Class");
         }
 
         public bool Match(Signatures.ISignature sig)
         {
-            return (String.IsNullOrEmpty(_schema) || sig.Schema == _schema) &&
-                   (String.IsNullOrEmpty(_prefix) || sig.Name.StartsWith(_prefix));
+            return (String.IsNullOrEmpty(Schema) || sig.Schema == Schema) &&
+                   (String.IsNullOrEmpty(Prefix) || sig.Name.StartsWith(Prefix));
         }
     }
 
 	public class Options
 	{
-		private string _connectionString;
-		private string _runtimeConnectionString;
-        private string _runtimeConnectionExpression;
-		private string _className;
-		private ProcedureOptions _default = null;
-		private Hashtable _options = new Hashtable();
-		private ProcedureReturnType _AutoReturnType = ProcedureReturnType.SqlDataReader;
-		private string _SnippetPre = String.Empty;
-		private string _SnippetPost = String.Empty;
+	    private ProcedureOptions _default;
+        private readonly Dictionary<string, ProcedureOptions> _options = new Dictionary<string, ProcedureOptions>();
 
-		private bool _GenerateWarnings = true;
-
-		private bool _IgnoreNonMatchingProcedures = false;
-
-		private bool _ParseNames = false;
-		private string _ParseNamesPrefix = "";
-		private string _ParseNamesDelim = "_";
-        private List<MappingOption> _Mappings = new List<MappingOption>();
-
-		public string SnippetPre
-		{
-			get
-			{
-				return _SnippetPre;
-			}
-		}
-
-		public string SnippetPost
-		{
-			get
-			{
-				return _SnippetPost;
-			}
-		}
-
-		public ProcedureReturnType AutoReturnType
-		{
-			get
-			{
-				return _AutoReturnType;
-			}
-		}
-
-		public List<MappingOption> Mappings
-		{
-			get
-			{
-				return _Mappings;
-			}
-		}
-
-		public bool GenerateWarnings
-		{
-			get
-			{
-				return _GenerateWarnings;
-			}
-		}
-
-		public bool ParseNames
-		{
-			get
-			{
-				return _ParseNames;
-			}
-		}
-
-		public string ParseNamesPrefix
-		{
-			get
-			{
-				return _ParseNamesPrefix;
-			}
-		}
-
-		public string ParseNamesDelim
-		{
-			get
-			{
-				return _ParseNamesDelim;
-			}
-		}
-
-		public SqlConnection CreateConnection()
-		{
-			return new SqlConnection(_connectionString);
-		}	
-
-		public string RuntimeConnectionString
-		{
-			get
-			{
-				return _runtimeConnectionString;
-			}
-		}
-
-        public string RuntimeConnectionExpression
-        {
-            get
-            {
-                return _runtimeConnectionExpression;
-            }
-        }
-
-		public string ClassName
-		{
-			get
-			{
-				return _className;
-			}
-		}
-
-		public bool IgnoreNonMatchingProcedures
-		{
-			get { return _IgnoreNonMatchingProcedures; }
-		}
-			
-		public ProcedureOptions this[string proc]
-		{
-			get
-			{
-				// look for the record
-				ProcedureOptions po =(ProcedureOptions)_options[proc];
-				if (null == po)
-				{
-					// no specific record for this proc,
-					// just return the default
-					return _default;
-				}
-				else
-				{
-					return po;
-				}
-			}
-		}
+        public string ConnectionString { get; set; }
+        public string SnippetPre { get; set; }
+		public string SnippetPost { get; set; }
+        public ProcedureReturnType AutoReturnType { get; set; }
+        public List<MappingOption> Mappings { get; set; }
+        public bool GenerateWarnings { get; set; }
+        public bool ParseNames { get; set; }
+	    public string ParseNamesPrefix { get; set; }
+	    public string ParseNamesDelim { get;  set; }
+	    public string RuntimeConnectionString { get; set; }
+	    public string RuntimeConnectionExpression { get; set; }
+	    public string ClassName { get; set; }
+	    public bool IgnoreNonMatchingProcedures { get; set; }
 
 		public Options(string xml)
 			: this(new XmlTextReader(new StringReader(xml))) 
 		{
 		}
+
 		public Options(XmlTextReader xml)
 		{
+            Mappings = new List<MappingOption>();
+		    AutoReturnType = ProcedureReturnType.SqlDataReader;
+
 			xml.WhitespaceHandling = WhitespaceHandling.None;
 			while (xml.Read())
 			{
@@ -324,24 +167,24 @@ namespace NSprocs
 					switch (xml.Name)
 					{
 						case "ConnectionString":
-							_connectionString = 
+							ConnectionString = 
 								xml.GetAttribute(
 								"Value");
 							break;
 
 						case "RuntimeConnectionString":
-							_runtimeConnectionString = 
+							RuntimeConnectionString = 
 								xml.GetAttribute(
 								"Value");
 							break;
 
                         case "RuntimeConnectionExpression":
-                            _runtimeConnectionExpression =
+                            RuntimeConnectionExpression =
                                 xml.ReadInnerXml().Trim();
                             break;
 
 						case "ClassName":
-							_className = 
+							ClassName = 
 								xml.GetAttribute(
 								"Value");
 							break;
@@ -351,54 +194,70 @@ namespace NSprocs
 							break;
 
 						case "Map":
-							_Mappings.Add(new MappingOption(xml));
+							Mappings.Add(new MappingOption(xml));
 							break;
 
 						case "DefaultMapping":
-							_ParseNames = true;
-							_ParseNamesPrefix = xml.GetAttribute("Prefix");
-							_ParseNamesDelim = xml.GetAttribute("Delim");
+							ParseNames = true;
+							ParseNamesPrefix = xml.GetAttribute("Prefix");
+							ParseNamesDelim = xml.GetAttribute("Delim");
 							break;
 
 						case "GenerateWarnings":
-							_GenerateWarnings = bool.Parse(xml.GetAttribute("Value"));
+							GenerateWarnings = bool.Parse(xml.GetAttribute("Value"));
 							break;
 
 						case "SnippetPre":
-							_SnippetPre = xml.ReadString();
+							SnippetPre = xml.ReadString();
 							break;
 
 						case "SnippetPost":
-							_SnippetPost = xml.ReadString();
+							SnippetPost = xml.ReadString();
 							break;
 
 						case "AutoReturnType":
-							_AutoReturnType = (ProcedureReturnType)
+							AutoReturnType = (ProcedureReturnType)
 								Enum.Parse(typeof(ProcedureReturnType), xml.GetAttribute("Value"), true);
 							break;
 
 						case "IgnoreNonMatchingProcedures":
-							_IgnoreNonMatchingProcedures = true;
+							IgnoreNonMatchingProcedures = true;
 							break;
 
 					} // switch
 				} // if
 			} // for
 
-			if (_runtimeConnectionString == String.Empty)
+			if (RuntimeConnectionString == String.Empty)
 			{
 				throw new Exception("No runtime connection specified.");
 			}
-			if (_className == String.Empty)
+			if (ClassName == String.Empty)
 			{
 				throw new Exception("No class name specified.");
 			}
+		    ParseNamesPrefix = "";
+		    ParseNamesDelim = "_";
 		}
+
+        public SqlConnection CreateConnection()
+        {
+            return new SqlConnection(ConnectionString);
+        }
+
+        public ProcedureOptions this[string proc]
+        {
+            get
+            {
+                // look for the record
+                return _options[proc] ?? _default;
+            }
+        }
 
 		private void ReadProcedureOptions(XmlTextReader xml)
 		{
 			// read the procedure def
-			ProcedureOptions po = new ProcedureOptions(xml);
+			var po = new ProcedureOptions(xml);
 	
 			// is this the default?
 			if (po.Name == "?")
@@ -434,7 +293,7 @@ namespace NSprocs
 			}
 
 			// matches the default mapping?
-			if (_ParseNames && sig.Name.StartsWith(_ParseNamesPrefix))
+			if (ParseNames && sig.Name.StartsWith(ParseNamesPrefix))
 			{
 				return true;
 			}
