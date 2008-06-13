@@ -104,8 +104,17 @@ namespace NSprocs.Generators.SqlServer
                 }
                 if (null == map && Options.ParseNames)
                 {
-                    // no mapping found, try default mapping
-                    if (methodName.StartsWith(Options.ParseNamesPrefix))
+                    // use pattern matching?
+                    if (null != Options.ParseNamesPattern)
+                    {
+                        var m = Options.ParseNamesPattern.Match(methodName);
+                        if (m.Success)
+                        {
+                            className = m.Groups["class"].Value;
+                            methodName = m.Groups["method"].Value;
+                        }
+                    }
+                    else if (methodName.StartsWith(Options.ParseNamesPrefix))
                     {
                         // strip the prefix
                         methodName = methodName.Substring(Options.ParseNamesPrefix.Length);
