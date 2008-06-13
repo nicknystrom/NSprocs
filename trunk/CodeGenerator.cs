@@ -106,6 +106,8 @@ namespace NSprocs
     [GuidAttribute("4ECB0E1C-67F0-45b4-A66F-1F1FDC7253A4")]
 	public class CodeGenerator : IVsSingleFileGenerator, IObjectWithSite
 	{
+        public Options Options { get; set; }
+
 		protected byte[] GenerateCode(
             IVsGeneratorProgress progress,
 			string file,
@@ -115,14 +117,14 @@ namespace NSprocs
 			try
 			{
 				// Parse options from Xml source doc
-				var o = new Options(contents);
+				Options = new Options(contents);
 
 				// read all sprocs from the database
-				var sigs = new SqlSignatures(o);
+				var sigs = new SqlSignatures(Options);
 
 				// Create the code generator
 				var g = new Generators.SqlServer.Generator(
-						o,
+						Options,
 						sigs);
 
 				// Setup code generation options
@@ -137,7 +139,7 @@ namespace NSprocs
 			    // Create the output
 				var output = new StringWriter();
 				
-				Provider
+				GetProvider()
 					.GenerateCodeFromNamespace(
 					g.GenerateCode(ns),
 					output,
@@ -162,7 +164,7 @@ namespace NSprocs
 
         public string GetDefaultExtension()
         {
-            string extension = Provider.FileExtension;
+            string extension = GetProvider().FileExtension;
             if (!string.IsNullOrEmpty(extension))
             {
                 if (extension[0] != '.')
@@ -212,42 +214,60 @@ namespace NSprocs
         object _site;
         CodeDomProvider _provider;
 
-        CodeDomProvider Provider
+        private CodeDomProvider GetProvider()
         {
-            get
+            if (null == _provider)
             {
-                if (null == _provider)
+                var sp = _site as IOleServiceProvider;
+                if (null != sp)
                 {
-                    var sp = _site as IOleServiceProvider;
-                    if (null != sp)
+                    var guidCodeDomProvider = new Guid("{73E59688-C7C4-4a85-AF64-A538754784C5}");
+                    var guidIUknown = new Guid("{00000000-0000-0000-C000-000000000046}");
+                    IntPtr ptrObj;
+                    if (sp.QueryService(ref guidCodeDomProvider, ref guidIUknown, out ptrObj) > 0)
                     {
-                        var guidCodeDomProvider = new Guid("{73E59688-C7C4-4a85-AF64-A538754784C5}");
-                        var guidIUknown = new Guid("{00000000-0000-0000-C000-000000000046}");
-                        IntPtr ptrObj;
-                        if (sp.QueryService(ref guidCodeDomProvider, ref guidIUknown, out ptrObj) > 0)
+                        object obj = Marshal.GetObjectForIUnknown(ptrObj);
+                        try
                         {
-                            object obj = Marshal.GetObjectForIUnknown(ptrObj);
-                            try
+                            _provider = obj as CodeDomProvider;
+                            if (null == _provider)
                             {
-                                _provider = obj as CodeDomProvider;
-                                if (null ==_provider)
-                                {
-                                
-                                }
-                            }
-                            finally
-                            {
-                                Marshal.Release(ptrObj);
                             }
                         }
+                        finally
+                        {
+                            Marshal.Release(ptrObj);
+                        }
                     }
-                    if (null == _provider)
+                }
+                if (null == _provider)
+                {
+                    if (null != Options && !String.IsNullOrEmpty(Options.Language))
+                    {
+                        switch (Options.Language)
+                        {
+                            case "C#":
+                            case "c#":
+                                _provider = new Microsoft.CSharp.CSharpCodeProvider();
+                                break;
+
+                            case "VB":
+                            case "Vb":
+                            case "vb":
+                                _provider = new Microsoft.VisualBasic.VBCodeProvider();
+                                break;
+
+                            default:
+                                throw new Exception("Unknown code provider requested, '" + Options.Language + "'.");
+                        }
+                    }
+                    else
                     {
                         _provider = new Microsoft.CSharp.CSharpCodeProvider();
                     }
                 }
-                return _provider;
             }
+            return _provider;
         }
 
         public void GetSite(ref Guid riid, out IntPtr ppvSite)

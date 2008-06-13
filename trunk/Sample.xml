@@ -52,6 +52,11 @@
               {
               }</SnippetPost>
 
+
+  <!-- Optionally make the language explicit. Auto-detection does not always work
+       so set this to either C# or VB if NSprocs generates the wrong kind of file for you. -->
+  <Language Value="VB" />
+  
   <!-- ##################################################### MAPPINGS -->
 
 	<!-- The <Map/> tag associates prefixes on stored procedure names to
