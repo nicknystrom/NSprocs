@@ -20,13 +20,9 @@ nnystrom@gmail.com
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
-
 using NSprocs.Signatures;
 
 namespace NSprocs.Signatures.SqlServer
@@ -34,79 +30,36 @@ namespace NSprocs.Signatures.SqlServer
     [ComVisible(false)]
 	public class Signature : ISignature
 	{
-		private string _Schema;
-		private string _Name;
-		private Exception _Exception = null;
-		private Parameters _Parameters;
-		private ResultSets _ResultSets;
+        public string Schema { get; private set; }
+        public string Name { get; private set; }
+        public Exception Exception { get; private set; }
+        public IList<IParameter> Parameters { get; private set; }
+        public IList<IResultSet> ResultSets { get; private set; }
 		
 		public string DatabaseName
 		{
 			get
 			{
-				if (null != _Schema && String.Empty != _Schema)
-				{
-					return String.Format("{0}.{1}", _Schema, _Name);
-				}
-				else
-				{
-					return _Name;
-				}
+				return !String.IsNullOrEmpty(Schema) ? String.Format("{0}.{1}", Schema, Name) : Name;
 			}
 		}
 
-		public string Schema
+        public string FrameworkName
 		{
 			get
 			{
-				return _Schema;
-			}
-		}
-		public string Name
-		{
-			get
-			{
-				return _Name;
-			}
-		}
-		public string FrameworkName
-		{
-			get
-			{
-				return _Name.Replace(' ', '_');
-			}
-		}
-		public Exception Exception
-		{
-			get
-			{
-				return _Exception;
+				return Name.Replace(' ', '_');
 			}
 		}
 
-		public ParameterCollection Parameters
-		{
-			get
-			{
-				return _Parameters;
-			}
-		}	  
-		
-		public ResultSetCollection ResultSets
-		{
-			get
-			{
-				return _ResultSets;
-			}
-		}
 
-		public Signature(
+        public Signature(
 			string schema,
 			string proc,
 			Options o)
 		{
-            _Schema = schema;
-			_Name = proc;
+            Schema = schema;
+			Name = proc;
 
 			// make sure connection is open
 			using (SqlConnection con = o.CreateConnection())
@@ -121,31 +74,31 @@ namespace NSprocs.Signatures.SqlServer
 				// add result sets
 				try
 				{
-					_Parameters = new Parameters(_Schema, _Name, con);
-					_ResultSets = new ResultSets(
-						_Schema,
-						_Name,
-						_Parameters,
+					Parameters = new Parameters(Schema, Name, con);
+					ResultSets = new ResultSets(
+						Schema,
+						Name,
+						Parameters,
 						con);
 				}
 				catch (Exception e)
 				{
 					// if any sql exceptions are thrown it is likely caused
 					// by a broken stored proc.
-					_Exception = e;
-					_ResultSets = null;
+					Exception = e;
+					ResultSets = null;
 				}
 			}
 		}
 	}
 
     [ComVisible(false)]
-	public class SqlSignatures : SignatureCollection
-	{
+	public class SqlSignatures : List<ISignature>
+    {
 		public SqlSignatures(Options o)
 		{
 			// open the connections
-			DataSet ds = new DataSet();
+			var ds = new DataSet();
 			using (SqlConnection con = o.CreateConnection())
 			{
 				if (con.State != ConnectionState.Open)
@@ -154,16 +107,15 @@ namespace NSprocs.Signatures.SqlServer
 				}
 
 				// get the procs
-                string sql =
+                var sql =
                 @"select ROUTINE_NAME 'Name',
                          ROUTINE_SCHEMA 'Schema'
                   from INFORMATION_SCHEMA.ROUTINES
                   where ROUTINE_TYPE = 'PROCEDURE'";
-				SqlCommand cmd = new SqlCommand(
+				var cmd = new SqlCommand(
 					sql,
-					con);
-				cmd.CommandType = CommandType.Text;
-				SqlDataAdapter a = new SqlDataAdapter(cmd);
+					con) {CommandType = CommandType.Text};
+			    var a = new SqlDataAdapter(cmd);
 				a.Fill(ds);
 			}
 			
@@ -172,7 +124,7 @@ namespace NSprocs.Signatures.SqlServer
 			{
 				try
 				{
-                    Signature s = new Signature(
+                    var s = new Signature(
                             (string)row["Schema"],
                             (string)row["Name"],
                             o);

@@ -19,52 +19,28 @@ nnystrom@gmail.com
 */
 
 using System;
-using System.CodeDom;
 using System.CodeDom.Compiler;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.SqlTypes;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
-using System.Xml.XPath;
-using System.Xml.Xsl;
 
-//using Microsoft.VisualStudio.Shell.Interop;
-//using OLE = Microsoft.VisualStudio.OLE.Interop;
-
-using NSprocs.Signatures;
 using NSprocs.Signatures.SqlServer;
 
 namespace NSprocs
 {
-	class LineNumberedException : System.ApplicationException
+	class LineNumberedException : ApplicationException
 	{
-		private int _line, _col;
-		public LineNumberedException(
+	    public LineNumberedException(
 			int line, int col, string msg)
 			: base(msg)
 		{
-			_line = line;
-			_col = col;
+			Line = line;
+			Col = col;
 		}
-		public int Line
-		{
-			get
-			{
-				return _line;
-			}
-		}
-		public int Col
-		{
-			get
-			{
-				return _col;
-			}
-		}
-    }
+
+	    public int Line { get; private set; }
+	    public int Col { get; private set; }
+	}
 
     #region Interfaces
 
@@ -130,10 +106,6 @@ namespace NSprocs
     [GuidAttribute("4ECB0E1C-67F0-45b4-A66F-1F1FDC7253A4")]
 	public class CodeGenerator : IVsSingleFileGenerator, IObjectWithSite
 	{
-		public CodeGenerator()
-		{
-		}
-
 		protected byte[] GenerateCode(
             IVsGeneratorProgress progress,
 			string file,
@@ -143,26 +115,27 @@ namespace NSprocs
 			try
 			{
 				// Parse options from Xml source doc
-				Options o = new Options(contents);
+				var o = new Options(contents);
 
 				// read all sprocs from the database
-				SqlSignatures sigs = new SqlSignatures(o);
+				var sigs = new SqlSignatures(o);
 
 				// Create the code generator
-				NSprocs.Generators.SqlServer.Generator g =
-					new NSprocs.Generators.SqlServer.Generator(
+				var g = new Generators.SqlServer.Generator(
 						o,
 						sigs);
 
 				// Setup code generation options
-				CodeGeneratorOptions options = new CodeGeneratorOptions();
-				options.BlankLinesBetweenMembers = false;
-				options.BracingStyle = "C";
-				options.ElseOnClosing = false;
-				options.IndentString = "\t";
+				var options = new CodeGeneratorOptions
+                {
+                    BlankLinesBetweenMembers = false,
+                    BracingStyle = "C",
+                    ElseOnClosing = false,
+                    IndentString = "\t"
+                };
 
-				// Create the output
-				StringWriter output = new StringWriter();
+			    // Create the output
+				var output = new StringWriter();
 				
 				Provider
 					.GenerateCodeFromNamespace(
@@ -190,7 +163,7 @@ namespace NSprocs
         public string GetDefaultExtension()
         {
             string extension = Provider.FileExtension;
-            if (extension != null && extension.Length > 0)
+            if (!string.IsNullOrEmpty(extension))
             {
                 if (extension[0] != '.')
                 {
@@ -245,16 +218,27 @@ namespace NSprocs
             {
                 if (null == _provider)
                 {
-                    IOleServiceProvider sp = _site as IOleServiceProvider;
+                    var sp = _site as IOleServiceProvider;
                     if (null != sp)
                     {
-                        Guid guidCodeDomProvider = new Guid("{73E59688-C7C4-4a85-AF64-A538754784C5}");
-                        Guid guidIUknown = new Guid("{00000000-0000-0000-C000-000000000046}");
+                        var guidCodeDomProvider = new Guid("{73E59688-C7C4-4a85-AF64-A538754784C5}");
+                        var guidIUknown = new Guid("{00000000-0000-0000-C000-000000000046}");
                         IntPtr ptrObj;
                         if (sp.QueryService(ref guidCodeDomProvider, ref guidIUknown, out ptrObj) > 0)
                         {
-                            _provider = Marshal.GetObjectForIUnknown(ptrObj) as CodeDomProvider;
-                            Marshal.Release(ptrObj);
+                            object obj = Marshal.GetObjectForIUnknown(ptrObj);
+                            try
+                            {
+                                _provider = obj as CodeDomProvider;
+                                if (null ==_provider)
+                                {
+                                
+                                }
+                            }
+                            finally
+                            {
+                                Marshal.Release(ptrObj);
+                            }
                         }
                     }
                     if (null == _provider)
