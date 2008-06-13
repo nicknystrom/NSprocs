@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace NSprocs
@@ -115,18 +116,48 @@ namespace NSprocs
         public string Schema { get; private set; }
         public string Prefix { get; private set; }
         public string Class { get; private set; }
+        public string Pattern { get; private set; }
+
+        private Regex _regex;
+
+        private Regex GetRegex()
+        {
+            if (null == _regex)
+            {
+                _regex = new Regex(Pattern);                
+            }
+            return _regex;
+        }
 
         public MappingOption(XmlReader xml)
         {
             Schema = xml.GetAttribute("Schema");
             Prefix = xml.GetAttribute("Prefix");
             Class = xml.GetAttribute("Class");
+            Pattern = xml.GetAttribute("Pattern");
         }
 
         public bool Match(Signatures.ISignature sig)
         {
-            return (String.IsNullOrEmpty(Schema) || sig.Schema == Schema) &&
-                   (String.IsNullOrEmpty(Prefix) || sig.Name.StartsWith(Prefix));
+            // match schema if given
+            if (!String.IsNullOrEmpty(Schema) &&
+                !String.Equals(sig.Schema, Schema, StringComparison.InvariantCultureIgnoreCase))
+                return false;
+
+            // match and remove prefix if given
+            var nm = sig.Name;
+            if (!String.IsNullOrEmpty(Prefix))
+            {
+                if (!nm.StartsWith(Prefix)) return false;
+                nm = nm.Substring(Prefix.Length);
+            }
+
+            // match pattern if also given
+            if (!String.IsNullOrEmpty(Pattern) &&
+                !GetRegex().IsMatch(nm))
+                return false;
+
+            return true;
         }
     }
 
@@ -142,6 +173,7 @@ namespace NSprocs
         public List<MappingOption> Mappings { get; set; }
         public bool GenerateWarnings { get; set; }
         public bool ParseNames { get; set; }
+        public Regex ParseNamesPattern { get; set; }
 	    public string ParseNamesPrefix { get; set; }
 	    public string ParseNamesDelim { get;  set; }
 	    public string RuntimeConnectionString { get; set; }
@@ -206,7 +238,9 @@ namespace NSprocs
 							ParseNames = true;
 							ParseNamesPrefix = xml.GetAttribute("Prefix");
 							ParseNamesDelim = xml.GetAttribute("Delim");
-							break;
+							if (!String.IsNullOrEmpty(xml.GetAttribute("Pattern")))
+                                ParseNamesPattern = new Regex(xml.GetAttribute("Pattern"));
+                            break;
 
 						case "GenerateWarnings":
 							GenerateWarnings = bool.Parse(xml.GetAttribute("Value"));
@@ -241,8 +275,7 @@ namespace NSprocs
 			{
 				throw new Exception("No class name specified.");
 			}
-		    ParseNamesPrefix = "";
-		    ParseNamesDelim = "_";
+
 		}
 
         public SqlConnection CreateConnection()
@@ -298,12 +331,14 @@ namespace NSprocs
 			}
 
 			// matches the default mapping?
-			if (ParseNames && sig.Name.StartsWith(ParseNamesPrefix))
+			if (ParseNames)
 			{
-				return true;
+			    return null != ParseNamesPattern
+                    ? ParseNamesPattern.IsMatch(sig.Name) 
+                    : sig.Name.StartsWith(ParseNamesPrefix);
 			}
 
-			// doesnt match
+		    // doesnt match
 			return !IgnoreNonMatchingProcedures;
 		}
 	}
